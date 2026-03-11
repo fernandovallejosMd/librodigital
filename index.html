@@ -56,6 +56,8 @@
       display:flex;
       gap:8px;
       align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
     }
 
     button{
@@ -133,7 +135,11 @@
       overflow:hidden;
       position:relative;
       touch-action:none;
-      cursor:default;
+      cursor:grab;
+    }
+
+    #zoomViewport.grabbing{
+      cursor:grabbing;
     }
 
     #zoomWrap{
@@ -458,11 +464,9 @@
 
     let isPanning = false;
     let startX = 0, startY = 0;
-
     let pinchStartDist = 0;
     let pinchStartScale = 1;
     let pinchCenter = {x:0,y:0};
-
     let mouseDown = false;
 
     function clamp(v, a, b){
@@ -471,7 +475,7 @@
 
     function applyTransform(){
       wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-      viewport.style.cursor = isZoomed() ? (mouseDown ? "grabbing" : "grab") : "default";
+      viewport.classList.toggle("grabbing", mouseDown);
     }
 
     function resetZoom(){
@@ -504,10 +508,6 @@
       return Math.hypot(dx, dy);
     }
 
-    function isZoomed(){
-      return scale > 1.01;
-    }
-
     let lastTap = 0;
     viewport.addEventListener("touchend", (e)=>{
       const now = Date.now();
@@ -516,7 +516,7 @@
 
       if(e.changedTouches && e.changedTouches.length === 1 && dt < 280){
         const t = e.changedTouches[0];
-        if(isZoomed()) resetZoom();
+        if(scale > 1.01) resetZoom();
         else zoomTo(2, t.clientX, t.clientY);
         e.preventDefault();
       }
@@ -531,11 +531,10 @@
           y: (e.touches[0].clientY + e.touches[1].clientY)/2
         };
         e.preventDefault();
-      }else if(e.touches.length === 1 && isZoomed()){
+      }else if(e.touches.length === 1){
         isPanning = true;
         startX = e.touches[0].clientX - tx;
         startY = e.touches[0].clientY - ty;
-        e.preventDefault();
       }
     }, {passive:false});
 
@@ -562,9 +561,8 @@
     document.getElementById("zoomOut").onclick = () => zoomTo(scale - 0.25, window.innerWidth/2, window.innerHeight/2);
     document.getElementById("zoomReset").onclick = () => resetZoom();
 
-    viewport.addEventListener("mousedown", (e) => {
-      if(!isZoomed()) return;
-
+    /* Mouse drag SIEMPRE */
+    viewport.addEventListener("mousedown", (e)=>{
       mouseDown = true;
       startX = e.clientX - tx;
       startY = e.clientY - ty;
@@ -572,25 +570,32 @@
       e.preventDefault();
     });
 
-    window.addEventListener("mousemove", (e) => {
+    window.addEventListener("mousemove", (e)=>{
       if(!mouseDown) return;
-
       tx = e.clientX - startX;
       ty = e.clientY - startY;
       applyTransform();
     });
 
-    window.addEventListener("mouseup", () => {
+    window.addEventListener("mouseup", ()=>{
       mouseDown = false;
       applyTransform();
     });
 
-    viewport.addEventListener("mouseleave", () => {
+    viewport.addEventListener("mouseleave", ()=>{
       if(mouseDown){
         mouseDown = false;
         applyTransform();
       }
     });
+
+    /* Rueda del mouse para zoom */
+    viewport.addEventListener("wheel", (e)=>{
+      e.preventDefault();
+
+      const delta = e.deltaY < 0 ? 0.15 : -0.15;
+      zoomTo(scale + delta, e.clientX, e.clientY);
+    }, { passive:false });
 
     let rT = null;
     window.addEventListener("resize", ()=>{
