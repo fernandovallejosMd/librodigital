@@ -15,14 +15,19 @@
       --btn2:#2f4060;
       --shadow:0 18px 60px rgba(0,0,0,.45);
     }
+
     *{ box-sizing:border-box; }
 
-    body{
+    html, body{
       margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      width:100%;
+      min-height:100%;
+    }
+
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background: radial-gradient(1200px 700px at 50% -10%, #1b2340 0%, var(--bg) 55%);
       color:var(--text);
-      min-height:100vh;
       display:flex;
       flex-direction:column;
     }
@@ -51,8 +56,6 @@
       display:flex;
       gap:8px;
       align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
     }
 
     button{
@@ -66,6 +69,7 @@
       transition: background .2s ease, transform .05s ease;
       touch-action: manipulation;
     }
+
     button:hover{ background:var(--btn2); }
     button:active{ transform: translateY(1px); }
 
@@ -101,8 +105,17 @@
       justify-content:center;
     }
 
-    .stage:fullscreen{ width:100vw; height:100vh; border-radius:0; }
-    .stage:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; }
+    .stage:fullscreen{
+      width:100vw;
+      height:100vh;
+      border-radius:0;
+    }
+
+    .stage:-webkit-full-screen{
+      width:100vw;
+      height:100vh;
+      border-radius:0;
+    }
 
     .stage.pseudo-full{
       position: fixed !important;
@@ -119,7 +132,7 @@
       height:100%;
       overflow:hidden;
       position:relative;
-      touch-action: none;
+      touch-action:none;
     }
 
     #zoomWrap{
@@ -176,8 +189,10 @@
       touch-action: manipulation;
       transition: opacity .2s ease, background .2s ease;
     }
+
     .navInside:hover{ background: rgba(0,0,0,.50); }
     .navInside:active{ transform: translateY(-50%) scale(0.98); }
+
     .navLeft{ left:14px; }
     .navRight{ right:14px; }
 
@@ -207,6 +222,7 @@
       touch-action: manipulation;
       transition: opacity .2s ease, background .2s ease;
     }
+
     .zoomBtn:hover{ background: rgba(0,0,0,.50); }
 
     .touch .navInside,
@@ -270,840 +286,283 @@
 </head>
 
 <body>
-<header>
-  <div class="title">Libro digital entre lo divino y lo terrenal</div>
+  <header>
+    <div class="title">Libro digital entre lo divino y lo terrenal</div>
 
-  <div class="controls">
-    <button class="topTool" id="fullscreen">⛶</button>
-  </div>
-</header>
-
-<main>
-  <div class="stage" id="stage">
-
-    <div id="exitFullBtn">✕</div>
-
-    <div class="navInside navLeft" id="prevInside">◀</div>
-    <div class="navInside navRight" id="nextInside">▶</div>
-
-    <div class="zoomBtns" id="zoomBtns">
-      <div class="zoomBtn" id="zoomOut">−</div>
-      <div class="zoomBtn" id="zoomIn">+</div>
-      <div class="zoomBtn" id="zoomReset">↺</div>
+    <div class="controls">
+      <button class="topTool" id="fullscreen">⛶</button>
     </div>
+  </header>
 
-    <div id="zoomViewport">
-      <div id="zoomWrap">
-        <div id="book"></div>
+  <main>
+    <div class="stage" id="stage">
+      <div id="exitFullBtn">✕</div>
+
+      <div class="navInside navLeft" id="prevInside">◀</div>
+      <div class="navInside navRight" id="nextInside">▶</div>
+
+      <div class="zoomBtns" id="zoomBtns">
+        <div class="zoomBtn" id="zoomOut">−</div>
+        <div class="zoomBtn" id="zoomIn">+</div>
+        <div class="zoomBtn" id="zoomReset">↺</div>
+      </div>
+
+      <div id="zoomViewport">
+        <div id="zoomWrap">
+          <div id="book"></div>
+        </div>
       </div>
     </div>
+  </main>
 
-  </div>
-</main>
+  <script>
+    const TOTAL = 177;
 
-<script>
-  const TOTAL = 177;
+    const stage = document.getElementById("stage");
+    const viewport = document.getElementById("zoomViewport");
+    const wrap = document.getElementById("zoomWrap");
+    const book = document.getElementById("book");
+    const fullBtn = document.getElementById("fullscreen");
+    const exitFullBtn = document.getElementById("exitFullBtn");
 
-  const stage = document.getElementById("stage");
-  const viewport = document.getElementById("zoomViewport");
-  const wrap = document.getElementById("zoomWrap");
-  const book = document.getElementById("book");
-  const fullBtn = document.getElementById("fullscreen");
-  const exitFullBtn = document.getElementById("exitFullBtn");
+    const isTouch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+    if (isTouch) stage.classList.add("touch");
 
-  const isTouch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-  if (isTouch) stage.classList.add("touch");
+    function nombrePagina(num){
+      let n = String(num);
+      if(num < 10) n = "0" + num;
+      return "./01-" + n + ".png";
+    }
 
-  function nombrePagina(num){
-    let n = String(num);
-    if(num < 10) n = "0" + num;
-    return "./01-" + n + ".png";
-  }
+    for(let i=1; i<=TOTAL; i++){
+      const page = document.createElement("div");
+      page.className = "page";
 
-  for(let i=1; i<=TOTAL; i++){
-    const page = document.createElement("div");
-    page.className = "page";
+      const img = document.createElement("img");
+      img.src = nombrePagina(i);
+      img.alt = "Página " + i;
+      img.loading = i <= 4 ? "eager" : "lazy";
 
-    const img = document.createElement("img");
-    img.src = nombrePagina(i);
-    img.alt = "Página " + i;
-    img.loading = i <= 4 ? "eager" : "lazy";
+      page.appendChild(img);
+      book.appendChild(page);
+    }
 
-    page.appendChild(img);
-    book.appendChild(page);
-  }
+    const pageFlip = new St.PageFlip(book,{
+      width:520,
+      height:700,
+      size:"stretch",
+      minWidth:320,
+      maxWidth:1400,
+      minHeight:420,
+      maxHeight:1000,
+      showCover:true,
+      mobileScrollSupport:true,
+      useMouseEvents:true,
+      flippingTime:700,
+      swipeDistance:25
+    });
 
-  const pageFlip = new St.PageFlip(book,{
-    width:520,
-    height:700,
-    size:"stretch",
-    minWidth:320,
-    maxWidth:1400,
-    minHeight:420,
-    maxHeight:1000,
-    showCover:true,
-    mobileScrollSupport:true,
-    useMouseEvents:true,
-    flippingTime:700,
-    swipeDistance:25
-  });
+    pageFlip.loadFromHTML(document.querySelectorAll(".page"));
+    pageFlip.flip(0);
 
-  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
-  pageFlip.flip(0);
+    document.getElementById("prevInside").onclick = () => pageFlip.flipPrev();
+    document.getElementById("nextInside").onclick = () => pageFlip.flipNext();
 
-  document.getElementById("prevInside").onclick = () => pageFlip.flipPrev();
-  document.getElementById("nextInside").onclick = () => pageFlip.flipNext();
+    let hideTimer = null;
+    function showControlsTemporarily(){
+      if(!isTouch) return;
+      stage.classList.add("show-controls");
+      clearTimeout(hideTimer);
+      hideTimer = setTimeout(() => stage.classList.remove("show-controls"), 1000);
+    }
 
-  let hideTimer = null;
-  function showControlsTemporarily(){
-    if(!isTouch) return;
-    stage.classList.add("show-controls");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => stage.classList.remove("show-controls"), 1000);
-  }
+    viewport.addEventListener("touchstart", showControlsTemporarily, {passive:true});
+    viewport.addEventListener("click", showControlsTemporarily);
 
-  viewport.addEventListener("touchstart", showControlsTemporarily, {passive:true});
-  viewport.addEventListener("click", showControlsTemporarily);
+    function hasNativeFullscreen(){
+      return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+    }
 
-  function hasNativeFullscreen(){
-    return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
-  }
+    function isNativeFullscreen(){
+      return !!(document.fullscreenElement || document.webkitFullscreenElement);
+    }
 
-  function isNativeFullscreen(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
+    async function requestNativeFullscreen(el){
+      if(el.requestFullscreen) return el.requestFullscreen();
+      if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
+    }
 
-  async function requestNativeFullscreen(el){
-    if(el.requestFullscreen) return el.requestFullscreen();
-    if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
-  }
+    async function exitNativeFullscreen(){
+      if(document.exitFullscreen) return document.exitFullscreen();
+      if(document.webkitExitFullscreen) return document.webkitExitFullscreen();
+    }
 
-  async function exitNativeFullscreen(){
-    if(document.exitFullscreen) return document.exitFullscreen();
-    if(document.webkitExitFullscreen) return document.webkitExitFullscreen();
-  }
+    function isPseudoFullscreen(){
+      return stage.classList.contains("pseudo-full");
+    }
 
-  function isPseudoFullscreen(){
-    return stage.classList.contains("pseudo-full");
-  }
+    function enterPseudoFullscreen(){
+      stage.classList.add("pseudo-full");
+      document.body.style.overflow = "hidden";
+      setTimeout(()=>pageFlip.update(), 250);
+    }
 
-  function enterPseudoFullscreen(){
-    stage.classList.add("pseudo-full");
-    document.body.style.overflow = "hidden";
-    setTimeout(()=>pageFlip.update(), 250);
-  }
+    function exitPseudoFullscreen(){
+      stage.classList.remove("pseudo-full");
+      document.body.style.overflow = "";
+      setTimeout(()=>pageFlip.update(), 250);
+    }
 
-  function exitPseudoFullscreen(){
-    stage.classList.remove("pseudo-full");
-    document.body.style.overflow = "";
-    setTimeout(()=>pageFlip.update(), 250);
-  }
-
-  async function openFullscreen(){
-    try{
-      if(hasNativeFullscreen()){
-        if(!isNativeFullscreen()){
-          await requestNativeFullscreen(stage);
-          setTimeout(()=>pageFlip.update(), 250);
-          return;
+    async function openFullscreen(){
+      try{
+        if(hasNativeFullscreen()){
+          if(!isNativeFullscreen()){
+            await requestNativeFullscreen(stage);
+            setTimeout(()=>pageFlip.update(), 250);
+            return;
+          }
+        } else {
+          enterPseudoFullscreen();
         }
-      } else {
+      }catch(e){
         enterPseudoFullscreen();
       }
-    }catch(e){
-      enterPseudoFullscreen();
-    }
-  }
-
-  async function closeFullscreen(){
-    try{
-      if(document.fullscreenElement || document.webkitFullscreenElement){
-        if(document.exitFullscreen) await document.exitFullscreen();
-        if(document.webkitExitFullscreen) await document.webkitExitFullscreen();
-      }
-
-      if(stage.classList.contains("pseudo-full")){
-        exitPseudoFullscreen();
-      }
-    }catch(e){
-      exitPseudoFullscreen();
-    }
-  }
-
-  fullBtn.addEventListener("click", openFullscreen);
-  exitFullBtn.addEventListener("click", closeFullscreen);
-
-  document.addEventListener("fullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
-  document.addEventListener("webkitfullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
-
-  let scale = 1;
-  const minScale = 1;
-  const maxScale = 3;
-  let tx = 0, ty = 0;
-
-  let isPanning = false;
-  let startX = 0, startY = 0;
-
-  let pinchStartDist = 0;
-  let pinchStartScale = 1;
-  let pinchCenter = {x:0,y:0};
-
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
-
-  function applyTransform(){
-    wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-  }
-
-  function resetZoom(){
-    scale = 1;
-    tx = 0;
-    ty = 0;
-    applyTransform();
-  }
-
-  function zoomTo(newScale, cx, cy){
-    newScale = clamp(newScale, minScale, maxScale);
-
-    const rect = viewport.getBoundingClientRect();
-    const x = cx - rect.left;
-    const y = cy - rect.top;
-
-    const contentX = (x - tx) / scale;
-    const contentY = (y - ty) / scale;
-
-    scale = newScale;
-    tx = x - contentX * scale;
-    ty = y - contentY * scale;
-
-    applyTransform();
-  }
-
-  function distance(t1, t2){
-    const dx = t2.clientX - t1.clientX;
-    const dy = t2.clientY - t1.clientY;
-    return Math.hypot(dx, dy);
-  }
-
-  function isZoomed(){
-    return scale > 1.01;
-  }
-
-  let lastTap = 0;
-  viewport.addEventListener("touchend", (e)=>{
-    const now = Date.now();
-    const dt = now - lastTap;
-    lastTap = now;
-
-    if(e.changedTouches && e.changedTouches.length === 1 && dt < 280){
-      const t = e.changedTouches[0];
-      if(isZoomed()) resetZoom();
-      else zoomTo(2, t.clientX, t.clientY);
-      e.preventDefault();
-    }
-  }, {passive:false});
-
-  viewport.addEventListener("touchstart", (e)=>{
-    if(e.touches.length === 2){
-      pinchStartDist = distance(e.touches[0], e.touches[1]);
-      pinchStartScale = scale;
-      pinchCenter = {
-        x: (e.touches[0].clientX + e.touches[1].clientX)/2,
-        y: (e.touches[0].clientY + e.touches[1].clientY)/2
-      };
-      e.preventDefault();
-    }else if(e.touches.length === 1 && isZoomed()){
-      isPanning = true;
-      startX = e.touches[0].clientX - tx;
-      startY = e.touches[0].clientY - ty;
-      e.preventDefault();
-    }
-  }, {passive:false});
-
-  viewport.addEventListener("touchmove", (e)=>{
-    if(e.touches.length === 2){
-      const d = distance(e.touches[0], e.touches[1]);
-      const factor = d / pinchStartDist;
-      zoomTo(pinchStartScale * factor, pinchCenter.x, pinchCenter.y);
-      e.preventDefault();
-    }else if(e.touches.length === 1 && isPanning){
-      tx = e.touches[0].clientX - startX;
-      ty = e.touches[0].clientY - startY;
-      applyTransform();
-      e.preventDefault();
-    }
-  }, {passive:false});
-
-  viewport.addEventListener("touchend", ()=>{
-    isPanning = false;
-  });
-
-  document.getElementById("zoomIn").onclick = () => zoomTo(scale + 0.25, window.innerWidth/2, window.innerHeight/2);
-  document.getElementById("zoomOut").onclick = () => zoomTo(scale - 0.25, window.innerWidth/2, window.innerHeight/2);
-  document.getElementById("zoomReset").onclick = () => resetZoom();
-
-  let rT = null;
-  window.addEventListener("resize", ()=>{
-    clearTimeout(rT);
-    rT = setTimeout(()=>{
-      pageFlip.update();
-      applyTransform();
-    }, 250);
-  });
-</script>
-
-</body>
-</html><!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>Libro digital entre lo divino y lo terrenal</title>
-
-  <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.min.js"></script>
-
-  <style>
-    :root{
-      --bg:#0f1115;
-      --text:#e9eef7;
-      --btn:#243046;
-      --btn2:#2f4060;
-      --shadow:0 18px 60px rgba(0,0,0,.45);
-    }
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background: radial-gradient(1200px 700px at 50% -10%, #1b2340 0%, var(--bg) 55%);
-      color:var(--text);
-      min-height:100vh;
-      display:flex;
-      flex-direction:column;
     }
 
-    header{
-      padding:14px;
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      position:sticky;
-      top:0;
-      z-index:50;
-      background: linear-gradient(to bottom, rgba(15,17,21,.92), rgba(15,17,21,.65));
-      backdrop-filter: blur(10px);
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-
-    .title{
-      font-weight:800;
-      font-size:14px;
-      line-height:1.2;
-    }
-
-    .controls{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-
-    button{
-      border:0;
-      border-radius:12px;
-      padding:10px 12px;
-      background:var(--btn);
-      color:var(--text);
-      font-weight:800;
-      cursor:pointer;
-      transition: background .2s ease, transform .05s ease;
-      touch-action: manipulation;
-    }
-    button:hover{ background:var(--btn2); }
-    button:active{ transform: translateY(1px); }
-
-    .topTool{
-      min-width:44px;
-      height:44px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:0 14px;
-      font-size:18px;
-    }
-
-    main{
-      flex:1;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding:14px;
-    }
-
-    .stage{
-      width:min(1100px,96vw);
-      height:min(720px,78vh);
-      background: rgba(255,255,255,.03);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius:18px;
-      box-shadow:var(--shadow);
-      position:relative;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .stage:fullscreen{ width:100vw; height:100vh; border-radius:0; }
-    .stage:-webkit-full-screen{ width:100vw; height:100vh; border-radius:0; }
-
-    .stage.pseudo-full{
-      position: fixed !important;
-      inset: 0 !important;
-      width: 100vw !important;
-      height: 100vh !important;
-      border-radius: 0 !important;
-      z-index: 9999 !important;
-      background: rgba(10,12,16,0.98);
-    }
-
-    #zoomViewport{
-      width:100%;
-      height:100%;
-      overflow:hidden;
-      position:relative;
-      touch-action: none;
-    }
-
-    #zoomWrap{
-      width:100%;
-      height:100%;
-      transform-origin: 0 0;
-      will-change: transform;
-    }
-
-    #book{
-      width:100%;
-      height:100%;
-    }
-
-    .page{
-      background:transparent;
-      position:relative;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .page img{
-      width:100%;
-      height:100%;
-      object-fit:contain;
-      display:block;
-      background:transparent;
-      -webkit-user-drag:none;
-      user-select:none;
-      pointer-events:none;
-    }
-
-    .navInside{
-      position:absolute;
-      top:50%;
-      transform: translateY(-50%);
-      z-index:30;
-      width:44px;
-      height:44px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.25);
-      background: rgba(0,0,0,.35);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:18px;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-      backdrop-filter: blur(8px);
-      touch-action: manipulation;
-      transition: opacity .2s ease, background .2s ease;
-    }
-    .navInside:hover{ background: rgba(0,0,0,.50); }
-    .navInside:active{ transform: translateY(-50%) scale(0.98); }
-    .navLeft{ left:14px; }
-    .navRight{ right:14px; }
-
-    .zoomBtns{
-      position:absolute;
-      left:14px;
-      bottom:14px;
-      z-index:35;
-      display:flex;
-      gap:8px;
-    }
-
-    .zoomBtn{
-      width:44px;
-      height:44px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.25);
-      background: rgba(0,0,0,.35);
-      color:#fff;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-      backdrop-filter: blur(8px);
-      touch-action: manipulation;
-      transition: opacity .2s ease, background .2s ease;
-    }
-    .zoomBtn:hover{ background: rgba(0,0,0,.50); }
-
-    .touch .navInside,
-    .touch .zoomBtns{
-      opacity:0;
-      pointer-events:none;
-    }
-
-    .touch.show-controls .navInside,
-    .touch.show-controls .zoomBtns{
-      opacity:.92;
-      pointer-events:auto;
-    }
-
-    #exitFullBtn{
-      position:absolute;
-      top:10px;
-      left:10px;
-      width:42px;
-      height:42px;
-      border-radius:10px;
-      background:rgba(0,0,0,.45);
-      color:#fff;
-      display:none;
-      align-items:center;
-      justify-content:center;
-      font-size:20px;
-      font-weight:900;
-      cursor:pointer;
-      z-index:60;
-      backdrop-filter:blur(6px);
-    }
-
-    #exitFullBtn:hover{
-      background:rgba(0,0,0,.65);
-    }
-
-    .stage.pseudo-full #exitFullBtn{
-      display:flex;
-    }
-
-    .stage:fullscreen #exitFullBtn{
-      display:flex;
-    }
-
-    .stage:-webkit-full-screen #exitFullBtn{
-      display:flex;
-    }
-
-    @media (max-width: 1024px){
-      .navInside{ width:52px; height:52px; font-size:20px; }
-      .zoomBtn{ width:52px; height:52px; }
-      .topTool{ min-width:42px; height:42px; font-size:17px; }
-    }
-
-    @media (max-width: 680px){
-      .title{ font-size:12px; max-width:42vw; }
-      .topTool{ min-width:40px; height:40px; font-size:16px; padding:0 10px; }
-    }
-  </style>
-</head>
-
-<body>
-<header>
-  <div class="title">Libro digital entre lo divino y lo terrenal</div>
-
-  <div class="controls">
-    <button class="topTool" id="fullscreen">⛶</button>
-  </div>
-</header>
-
-<main>
-  <div class="stage" id="stage">
-
-    <div id="exitFullBtn">✕</div>
-
-    <div class="navInside navLeft" id="prevInside">◀</div>
-    <div class="navInside navRight" id="nextInside">▶</div>
-
-    <div class="zoomBtns" id="zoomBtns">
-      <div class="zoomBtn" id="zoomOut">−</div>
-      <div class="zoomBtn" id="zoomIn">+</div>
-      <div class="zoomBtn" id="zoomReset">↺</div>
-    </div>
-
-    <div id="zoomViewport">
-      <div id="zoomWrap">
-        <div id="book"></div>
-      </div>
-    </div>
-
-  </div>
-</main>
-
-<script>
-  const TOTAL = 177;
-
-  const stage = document.getElementById("stage");
-  const viewport = document.getElementById("zoomViewport");
-  const wrap = document.getElementById("zoomWrap");
-  const book = document.getElementById("book");
-  const fullBtn = document.getElementById("fullscreen");
-  const exitFullBtn = document.getElementById("exitFullBtn");
-
-  const isTouch = window.matchMedia("(hover: none), (pointer: coarse)").matches;
-  if (isTouch) stage.classList.add("touch");
-
-  function nombrePagina(num){
-    let n = String(num);
-    if(num < 10) n = "0" + num;
-    return "./01-" + n + ".png";
-  }
-
-  for(let i=1; i<=TOTAL; i++){
-    const page = document.createElement("div");
-    page.className = "page";
-
-    const img = document.createElement("img");
-    img.src = nombrePagina(i);
-    img.alt = "Página " + i;
-    img.loading = i <= 4 ? "eager" : "lazy";
-
-    page.appendChild(img);
-    book.appendChild(page);
-  }
-
-  const pageFlip = new St.PageFlip(book,{
-    width:520,
-    height:700,
-    size:"stretch",
-    minWidth:320,
-    maxWidth:1400,
-    minHeight:420,
-    maxHeight:1000,
-    showCover:true,
-    mobileScrollSupport:true,
-    useMouseEvents:true,
-    flippingTime:700,
-    swipeDistance:25
-  });
-
-  pageFlip.loadFromHTML(document.querySelectorAll(".page"));
-  pageFlip.flip(0);
-
-  document.getElementById("prevInside").onclick = () => pageFlip.flipPrev();
-  document.getElementById("nextInside").onclick = () => pageFlip.flipNext();
-
-  let hideTimer = null;
-  function showControlsTemporarily(){
-    if(!isTouch) return;
-    stage.classList.add("show-controls");
-    clearTimeout(hideTimer);
-    hideTimer = setTimeout(() => stage.classList.remove("show-controls"), 1000);
-  }
-
-  viewport.addEventListener("touchstart", showControlsTemporarily, {passive:true});
-  viewport.addEventListener("click", showControlsTemporarily);
-
-  function hasNativeFullscreen(){
-    return !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
-  }
-
-  function isNativeFullscreen(){
-    return !!(document.fullscreenElement || document.webkitFullscreenElement);
-  }
-
-  async function requestNativeFullscreen(el){
-    if(el.requestFullscreen) return el.requestFullscreen();
-    if(el.webkitRequestFullscreen) return el.webkitRequestFullscreen();
-  }
-
-  async function exitNativeFullscreen(){
-    if(document.exitFullscreen) return document.exitFullscreen();
-    if(document.webkitExitFullscreen) return document.webkitExitFullscreen();
-  }
-
-  function isPseudoFullscreen(){
-    return stage.classList.contains("pseudo-full");
-  }
-
-  function enterPseudoFullscreen(){
-    stage.classList.add("pseudo-full");
-    document.body.style.overflow = "hidden";
-    setTimeout(()=>pageFlip.update(), 250);
-  }
-
-  function exitPseudoFullscreen(){
-    stage.classList.remove("pseudo-full");
-    document.body.style.overflow = "";
-    setTimeout(()=>pageFlip.update(), 250);
-  }
-
-  async function openFullscreen(){
-    try{
-      if(hasNativeFullscreen()){
-        if(!isNativeFullscreen()){
-          await requestNativeFullscreen(stage);
-          setTimeout(()=>pageFlip.update(), 250);
-          return;
+    async function closeFullscreen(){
+      try{
+        if(document.fullscreenElement || document.webkitFullscreenElement){
+          if(document.exitFullscreen) await document.exitFullscreen();
+          if(document.webkitExitFullscreen) await document.webkitExitFullscreen();
         }
-      } else {
-        enterPseudoFullscreen();
-      }
-    }catch(e){
-      enterPseudoFullscreen();
-    }
-  }
 
-  async function closeFullscreen(){
-    try{
-      if(document.fullscreenElement || document.webkitFullscreenElement){
-        if(document.exitFullscreen) await document.exitFullscreen();
-        if(document.webkitExitFullscreen) await document.webkitExitFullscreen();
-      }
-
-      if(stage.classList.contains("pseudo-full")){
+        if(stage.classList.contains("pseudo-full")){
+          exitPseudoFullscreen();
+        }
+      }catch(e){
         exitPseudoFullscreen();
       }
-    }catch(e){
-      exitPseudoFullscreen();
     }
-  }
 
-  fullBtn.addEventListener("click", openFullscreen);
-  exitFullBtn.addEventListener("click", closeFullscreen);
+    fullBtn.addEventListener("click", openFullscreen);
+    exitFullBtn.addEventListener("click", closeFullscreen);
 
-  document.addEventListener("fullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
-  document.addEventListener("webkitfullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
+    document.addEventListener("fullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
+    document.addEventListener("webkitfullscreenchange", ()=>setTimeout(()=>pageFlip.update(),150));
 
-  let scale = 1;
-  const minScale = 1;
-  const maxScale = 3;
-  let tx = 0, ty = 0;
+    let scale = 1;
+    const minScale = 1;
+    const maxScale = 3;
+    let tx = 0, ty = 0;
 
-  let isPanning = false;
-  let startX = 0, startY = 0;
+    let isPanning = false;
+    let startX = 0, startY = 0;
 
-  let pinchStartDist = 0;
-  let pinchStartScale = 1;
-  let pinchCenter = {x:0,y:0};
+    let pinchStartDist = 0;
+    let pinchStartScale = 1;
+    let pinchCenter = {x:0,y:0};
 
-  function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
 
-  function applyTransform(){
-    wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
-  }
-
-  function resetZoom(){
-    scale = 1;
-    tx = 0;
-    ty = 0;
-    applyTransform();
-  }
-
-  function zoomTo(newScale, cx, cy){
-    newScale = clamp(newScale, minScale, maxScale);
-
-    const rect = viewport.getBoundingClientRect();
-    const x = cx - rect.left;
-    const y = cy - rect.top;
-
-    const contentX = (x - tx) / scale;
-    const contentY = (y - ty) / scale;
-
-    scale = newScale;
-    tx = x - contentX * scale;
-    ty = y - contentY * scale;
-
-    applyTransform();
-  }
-
-  function distance(t1, t2){
-    const dx = t2.clientX - t1.clientX;
-    const dy = t2.clientY - t1.clientY;
-    return Math.hypot(dx, dy);
-  }
-
-  function isZoomed(){
-    return scale > 1.01;
-  }
-
-  let lastTap = 0;
-  viewport.addEventListener("touchend", (e)=>{
-    const now = Date.now();
-    const dt = now - lastTap;
-    lastTap = now;
-
-    if(e.changedTouches && e.changedTouches.length === 1 && dt < 280){
-      const t = e.changedTouches[0];
-      if(isZoomed()) resetZoom();
-      else zoomTo(2, t.clientX, t.clientY);
-      e.preventDefault();
+    function applyTransform(){
+      wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
     }
-  }, {passive:false});
 
-  viewport.addEventListener("touchstart", (e)=>{
-    if(e.touches.length === 2){
-      pinchStartDist = distance(e.touches[0], e.touches[1]);
-      pinchStartScale = scale;
-      pinchCenter = {
-        x: (e.touches[0].clientX + e.touches[1].clientX)/2,
-        y: (e.touches[0].clientY + e.touches[1].clientY)/2
-      };
-      e.preventDefault();
-    }else if(e.touches.length === 1 && isZoomed()){
-      isPanning = true;
-      startX = e.touches[0].clientX - tx;
-      startY = e.touches[0].clientY - ty;
-      e.preventDefault();
-    }
-  }, {passive:false});
-
-  viewport.addEventListener("touchmove", (e)=>{
-    if(e.touches.length === 2){
-      const d = distance(e.touches[0], e.touches[1]);
-      const factor = d / pinchStartDist;
-      zoomTo(pinchStartScale * factor, pinchCenter.x, pinchCenter.y);
-      e.preventDefault();
-    }else if(e.touches.length === 1 && isPanning){
-      tx = e.touches[0].clientX - startX;
-      ty = e.touches[0].clientY - startY;
+    function resetZoom(){
+      scale = 1;
+      tx = 0;
+      ty = 0;
       applyTransform();
-      e.preventDefault();
     }
-  }, {passive:false});
 
-  viewport.addEventListener("touchend", ()=>{
-    isPanning = false;
-  });
+    function zoomTo(newScale, cx, cy){
+      newScale = clamp(newScale, minScale, maxScale);
 
-  document.getElementById("zoomIn").onclick = () => zoomTo(scale + 0.25, window.innerWidth/2, window.innerHeight/2);
-  document.getElementById("zoomOut").onclick = () => zoomTo(scale - 0.25, window.innerWidth/2, window.innerHeight/2);
-  document.getElementById("zoomReset").onclick = () => resetZoom();
+      const rect = viewport.getBoundingClientRect();
+      const x = cx - rect.left;
+      const y = cy - rect.top;
 
-  let rT = null;
-  window.addEventListener("resize", ()=>{
-    clearTimeout(rT);
-    rT = setTimeout(()=>{
-      pageFlip.update();
+      const contentX = (x - tx) / scale;
+      const contentY = (y - ty) / scale;
+
+      scale = newScale;
+      tx = x - contentX * scale;
+      ty = y - contentY * scale;
+
       applyTransform();
-    }, 250);
-  });
-</script>
+    }
 
+    function distance(t1, t2){
+      const dx = t2.clientX - t1.clientX;
+      const dy = t2.clientY - t1.clientY;
+      return Math.hypot(dx, dy);
+    }
+
+    function isZoomed(){
+      return scale > 1.01;
+    }
+
+    let lastTap = 0;
+    viewport.addEventListener("touchend", (e)=>{
+      const now = Date.now();
+      const dt = now - lastTap;
+      lastTap = now;
+
+      if(e.changedTouches && e.changedTouches.length === 1 && dt < 280){
+        const t = e.changedTouches[0];
+        if(isZoomed()) resetZoom();
+        else zoomTo(2, t.clientX, t.clientY);
+        e.preventDefault();
+      }
+    }, {passive:false});
+
+    viewport.addEventListener("touchstart", (e)=>{
+      if(e.touches.length === 2){
+        pinchStartDist = distance(e.touches[0], e.touches[1]);
+        pinchStartScale = scale;
+        pinchCenter = {
+          x: (e.touches[0].clientX + e.touches[1].clientX)/2,
+          y: (e.touches[0].clientY + e.touches[1].clientY)/2
+        };
+        e.preventDefault();
+      }else if(e.touches.length === 1 && isZoomed()){
+        isPanning = true;
+        startX = e.touches[0].clientX - tx;
+        startY = e.touches[0].clientY - ty;
+        e.preventDefault();
+      }
+    }, {passive:false});
+
+    viewport.addEventListener("touchmove", (e)=>{
+      if(e.touches.length === 2){
+        const d = distance(e.touches[0], e.touches[1]);
+        const factor = d / pinchStartDist;
+        zoomTo(pinchStartScale * factor, pinchCenter.x, pinchCenter.y);
+        e.preventDefault();
+      }else if(e.touches.length === 1 && isPanning){
+        tx = e.touches[0].clientX - startX;
+        ty = e.touches[0].clientY - startY;
+        applyTransform();
+        e.preventDefault();
+      }
+    }, {passive:false});
+
+    viewport.addEventListener("touchend", ()=>{
+      isPanning = false;
+    });
+
+    document.getElementById("zoomIn").onclick = () => zoomTo(scale + 0.25, window.innerWidth/2, window.innerHeight/2);
+    document.getElementById("zoomOut").onclick = () => zoomTo(scale - 0.25, window.innerWidth/2, window.innerHeight/2);
+    document.getElementById("zoomReset").onclick = () => resetZoom();
+
+    let rT = null;
+    window.addEventListener("resize", ()=>{
+      clearTimeout(rT);
+      rT = setTimeout(()=>{
+        pageFlip.update();
+        applyTransform();
+      }, 250);
+    });
+  </script>
 </body>
 </html>
