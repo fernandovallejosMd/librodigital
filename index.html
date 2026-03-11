@@ -563,6 +563,39 @@
         applyTransform();
       }, 250);
     });
+    /* ===== PAN CON MOUSE (computador) ===== */
+
+let mouseDown = false;
+
+viewport.addEventListener("mousedown", (e) => {
+
+  if(!isZoomed()) return;
+
+  mouseDown = true;
+
+  startX = e.clientX - tx;
+  startY = e.clientY - ty;
+
+  viewport.style.cursor = "grabbing";
+});
+
+window.addEventListener("mousemove", (e) => {
+
+  if(!mouseDown) return;
+
+  tx = e.clientX - startX;
+  ty = e.clientY - startY;
+
+  applyTransform();
+});
+
+window.addEventListener("mouseup", () => {
+
+  mouseDown = false;
+
+  viewport.style.cursor = "grab";
+
+});
   </script>
 </body>
 </html>
