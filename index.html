@@ -133,6 +133,7 @@
       overflow:hidden;
       position:relative;
       touch-action:none;
+      cursor:default;
     }
 
     #zoomWrap{
@@ -462,10 +463,15 @@
     let pinchStartScale = 1;
     let pinchCenter = {x:0,y:0};
 
-    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+    let mouseDown = false;
+
+    function clamp(v, a, b){
+      return Math.max(a, Math.min(b, v));
+    }
 
     function applyTransform(){
       wrap.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      viewport.style.cursor = isZoomed() ? (mouseDown ? "grabbing" : "grab") : "default";
     }
 
     function resetZoom(){
@@ -549,11 +555,42 @@
 
     viewport.addEventListener("touchend", ()=>{
       isPanning = false;
+      applyTransform();
     });
 
     document.getElementById("zoomIn").onclick = () => zoomTo(scale + 0.25, window.innerWidth/2, window.innerHeight/2);
     document.getElementById("zoomOut").onclick = () => zoomTo(scale - 0.25, window.innerWidth/2, window.innerHeight/2);
     document.getElementById("zoomReset").onclick = () => resetZoom();
+
+    viewport.addEventListener("mousedown", (e) => {
+      if(!isZoomed()) return;
+
+      mouseDown = true;
+      startX = e.clientX - tx;
+      startY = e.clientY - ty;
+      applyTransform();
+      e.preventDefault();
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if(!mouseDown) return;
+
+      tx = e.clientX - startX;
+      ty = e.clientY - startY;
+      applyTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+      mouseDown = false;
+      applyTransform();
+    });
+
+    viewport.addEventListener("mouseleave", () => {
+      if(mouseDown){
+        mouseDown = false;
+        applyTransform();
+      }
+    });
 
     let rT = null;
     window.addEventListener("resize", ()=>{
@@ -563,39 +600,8 @@
         applyTransform();
       }, 250);
     });
-    /* ===== PAN CON MOUSE (computador) ===== */
 
-let mouseDown = false;
-
-viewport.addEventListener("mousedown", (e) => {
-
-  if(!isZoomed()) return;
-
-  mouseDown = true;
-
-  startX = e.clientX - tx;
-  startY = e.clientY - ty;
-
-  viewport.style.cursor = "grabbing";
-});
-
-window.addEventListener("mousemove", (e) => {
-
-  if(!mouseDown) return;
-
-  tx = e.clientX - startX;
-  ty = e.clientY - startY;
-
-  applyTransform();
-});
-
-window.addEventListener("mouseup", () => {
-
-  mouseDown = false;
-
-  viewport.style.cursor = "grab";
-
-});
+    applyTransform();
   </script>
 </body>
 </html>
